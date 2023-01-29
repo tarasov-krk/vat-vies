@@ -1,0 +1,50 @@
+version: "3.6"
+
+networks:
+    test:
+        driver: bridge
+        name: test
+
+services:
+    nginx:
+        container_name: vv_nginx
+        image: nginx:latest
+        volumes:
+            - ./:/var/www
+            - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+        working_dir: /var/www
+        ports:
+            - "80:80"
+        restart: unless-stopped
+        networks:
+            - test
+        depends_on:
+            - php
+
+    php:
+        container_name: vv_php
+        build:
+            context: ./docker/php
+            dockerfile: Dockerfile
+        volumes:
+            - ./:/var/www
+        working_dir: /var/www
+        networks:
+            - test
+        restart: unless-stopped
+        links:
+            - db
+        depends_on:
+            - db
+
+    db:
+        container_name: vv_db
+        image: library/mysql:8
+        environment:
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+        restart: unless-stopped
+        ports:
+            - "3306:3306"
+        networks:
+            - test
+
